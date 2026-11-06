@@ -1,7 +1,11 @@
 Pobieranie dróg dla Torunia
-[out:json][timeout:180];
-way["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street)(_link)?$"]
-  (52.95,18.45,53.10,18.75);
+ [out:json][timeout:180];
+(
+  way["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street)(_link)?$"]
+    (52.95,18.45,53.10,18.75);
+  way["highway"="service"]["service"!~"parking_aisle|driveway"]
+    (52.95,18.45,53.10,18.75);
+);
 out geom;
 
 Pobieranie pomników dla Torunia
@@ -9,8 +13,13 @@ Pobieranie pomników dla Torunia
 nwr["historic"="monument"](52.95,18.45,53.10,18.75);
 out center;
 
+Pobieranie tablic pamiątkowych dla Torunia
+[out:json][timeout:60];
+nwr["historic"="memorial"](52.95,18.45,53.10,18.75);
+out center;
+
 Jak pobrać dane:
 1. Wejdź na https://overpass-turbo.eu i wklej powyższe zapytanie (bez tego opisu).
 2. Kliknij Uruchom. Jeśli wyskoczy ostrzeżenie o dużym pliku, wybierz opcję, żeby nie wyświetlać danych na mapie.
 3. Eksport -> Dane -> GeoJSON (pobierz plik).
-4. Plik zapisz jako data/raw/torun_drogi.geojson (ten folder jest w .gitignore).
+4. Plik zapisz jako data/raw/torun_drogi.geojson

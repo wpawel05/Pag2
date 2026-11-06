@@ -44,12 +44,12 @@ def predkosci(tagi):
 
 
 def przejezdna(tagi):
-    """Czy droga jest dla samochodów (odrzuca drogi z zakazem ruchu pojazdów)."""
+    """Czy droga jest dla samochodów. Odrzucamy tylko zakaz (no), drogi prywatne zostają."""
     if not tagi.get("highway"):
         return False
-    if tagi.get("access") in ("no", "private") and tagi.get("motor_vehicle") not in ("yes", "permissive"):
+    if tagi.get("access") == "no" and tagi.get("motor_vehicle") not in ("yes", "permissive"):
         return False
-    return tagi.get("motor_vehicle") not in ("no", "private")
+    return tagi.get("motor_vehicle") != "no"
 
 
 def _idy_osm(cecha):
