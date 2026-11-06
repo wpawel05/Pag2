@@ -8,3 +8,9 @@ Pobieranie pomników dla Torunia
 [out:json][timeout:60];
 nwr["historic"="monument"](52.95,18.45,53.10,18.75);
 out center;
+
+Jak pobrać dane:
+1. Wejdź na https://overpass-turbo.eu i wklej powyższe zapytanie (bez tego opisu).
+2. Kliknij Uruchom. Jeśli wyskoczy ostrzeżenie o dużym pliku, wybierz opcję, żeby nie wyświetlać danych na mapie.
+3. Eksport -> Dane -> GeoJSON (pobierz plik).
+4. Plik zapisz jako data/raw/torun_drogi.geojson (ten folder jest w .gitignore).
