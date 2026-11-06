@@ -1,0 +1,10 @@
+Pobieranie dróg dla Torunia
+[out:json][timeout:180];
+way["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street)(_link)?$"]
+  (52.95,18.45,53.10,18.75);
+out geom;
+
+Pobieranie pomników dla Torunia
+[out:json][timeout:60];
+nwr["historic"="monument"](52.95,18.45,53.10,18.75);
+out center;
