@@ -1,4 +1,4 @@
-"""Wyszukiwanie tras w grafie z :mod:`src.graph` test test.
+"""Wyszukiwanie tras w grafie z :mod:`src.graph`.
 
 Moduł oddziela algorytm wyszukiwania od modelu kosztu krawędzi. Dzięki temu
 można później dodać np. trasę widokową, rowerową albo kary za wybrane drogi,
