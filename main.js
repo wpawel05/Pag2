@@ -67,6 +67,26 @@ function addRouteLayer() {
   }
 }
 
+// Warstwa z prostokątem przedstawiającym obszar, w którym można wyznaczyć trasy
+map.on('style.load', () => {
+  map.addSource('bbox', {
+    type: 'geojson',
+    data: {
+      type: 'Feature',
+      geometry: {
+        type: 'Polygon',
+        coordinates: [[[18.45, 52.95], [18.75, 52.95], [18.75, 53.10], [18.45, 53.10], [18.45, 52.95]]]
+      }
+    }
+  });
+  map.addLayer({
+    id: 'bbox-line',
+    type: 'line',
+    source: 'bbox',
+    paint: { 'line-color': '#1769ff', 'line-width': 2 }
+  });
+});
+
 // Warstwa jest dodawana również po zmianie podkładu mapy.
 map.on('style.load', addRouteLayer);
 
