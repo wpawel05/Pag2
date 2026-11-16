@@ -1,32 +1,79 @@
+from pathlib import Path
+
+from flask import Flask, jsonify, request, send_from_directory
+
 from src.graph import load_graph
 from src.routing import znajdz_trase
 
-# Wczytaj sieć drogową
-graf = load_graph("data/torun/torun_edges.geojson")
+ROOT = Path(__file__).resolve().parent
+app = Flask(__name__)
 
-# Współrzędne wpisuj jako: długość geograficzna, szerokość geograficzna
-start_lon, start_lat = 18.60, 53.01  # tu wpisz punkt startowy
-cel_lon, cel_lat = 18.66, 53.02      # tu wpisz punkt docelowy
+# Graf wczytujemy raz przy uruchomieniu serwera.
+graf = load_graph(str(ROOT / "data" / "torun" / "torun_edges.geojson"))
 
-# Znajdź w grafie najbliższe węzły sieci drogowej
-start, odleglosc_start = graf.najblizszy_wezel(start_lon, start_lat)
-cel, odleglosc_cel = graf.najblizszy_wezel(cel_lon, cel_lat)
 
-if start is None or cel is None:
-    print("Nie znaleziono drogi dostatecznie blisko jednego z punktów.")
-else:
-    # Oblicz trasę: A* i kryterium najszybszego przejazdu
+@app.get("/")
+def strona():
+    return send_from_directory(ROOT, "index.html")
+
+
+@app.get("/main.js")
+def javascript():
+    return send_from_directory(ROOT, "main.js")
+
+
+@app.get("/style.css")
+def style():
+    return send_from_directory(ROOT, "style.css")
+
+
+@app.post("/api/route")
+def wyznacz_trase():
+    dane = request.get_json(silent=True) or {}
+
+    try:
+        start_lon, start_lat = map(float, dane["start"])
+        cel_lon, cel_lat = map(float, dane["cel"])
+    except (KeyError, TypeError, ValueError):
+        return jsonify({"error": "Podaj start i cel jako [lon, lat]."}), 400
+
+    start, odl_start = graf.najblizszy_wezel(start_lon, start_lat)
+    cel, odl_cel = graf.najblizszy_wezel(cel_lon, cel_lat)
+
+    if start is None or cel is None:
+        return jsonify({"error": "Nie znaleziono drogi blisko jednego z punktów."}), 400
+
     trasa = znajdz_trase(
         graf,
         start=start,
         cel=cel,
         algorytm="astar",
-        kryterium="najszybsza",
+        kryterium="najkrotsza",
     )
 
     if trasa is None:
-        print("Nie znaleziono trasy między tymi punktami.")
-    else:
-        print(f"Długość trasy: {trasa.dlugosc_m:.0f} m")
-        print(f"Szacowany czas: {trasa.czas_s / 60:.1f} min")
-        print(f"Współrzędne trasy: {trasa.geometria}")
+        return jsonify({"error": "Nie znaleziono drogi między punktami."}), 404
+
+    if len(trasa.geometria) < 2:
+        return jsonify({"error": "Start i cel wskazują ten sam punkt sieci."}), 400
+
+    return jsonify({
+        "type": "FeatureCollection",
+        "features": [{
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": trasa.geometria,
+            },
+            "properties": {
+                "dlugosc_m": trasa.dlugosc_m,
+                "czas_s": trasa.czas_s,
+                "odleglosc_przypiecia_start_m": odl_start,
+                "odleglosc_przypiecia_cel_m": odl_cel,
+            },
+        }],
+    })
+
+
+if __name__ == "__main__":
+    app.run(port=5000, debug=True)
