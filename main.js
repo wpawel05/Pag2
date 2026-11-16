@@ -20,8 +20,8 @@ const STYLES = { osm: STYLE_OSM, satelite: STYLE_SATELITA };
 const map = new maplibregl.Map({
   container: 'map',
   style: STYLES.osm,
-  center: [18, 53],
-  zoom: 6
+  center: [18.60, 53.01],
+  zoom: 12
 });
 
 map.addControl(new maplibregl.NavigationControl(), 'top-right');
@@ -133,8 +133,20 @@ map.on('click', async (event) => {
     map.fitBounds(bounds, { padding: 60, maxZoom: 16 });
 
     const km = (feature.properties.dlugosc_m / 1000).toFixed(2);
-    const min = (feature.properties.czas_s / 60).toFixed(1);
-    status.textContent = `Trasa: ${km} km, około ${min} min.`;
+    const calkowityCzas = Math.round(feature.properties.czas_s);
+    const minuty = Math.floor(calkowityCzas / 60);
+    const sekundy = calkowityCzas % 60;
+
+    let czasTekst;
+    if (minuty === 0) {
+      czasTekst = `${sekundy} s`;
+    } else if (sekundy === 0) {
+      czasTekst = `${minuty} min`;
+    } else {
+      czasTekst = `${minuty} min ${sekundy} s`;
+    }
+
+    status.textContent = `Trasa: ${km} km, około ${czasTekst}.`;
   } catch (error) {
     status.textContent = error.message;
   }
