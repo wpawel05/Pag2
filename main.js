@@ -2,6 +2,8 @@ import * as maplibregl from 'https://unpkg.com/maplibre-gl@6.6.0/dist/maplibre-g
 
 const STYLE_OSM = 'https://tiles.openfreemap.org/styles/liberty';
 
+const STYLE_CIEMNY = 'https://tiles.openfreemap.org/styles/dark';
+
 const STYLE_SATELITA = {
   version: 8,
   sources: {
@@ -15,7 +17,7 @@ const STYLE_SATELITA = {
   layers: [{ id: 'satelite-layer', type: 'raster', source: 'satelite-tiles' }]
 };
 
-const STYLES = { osm: STYLE_OSM, satelite: STYLE_SATELITA };
+const STYLES = { osm: STYLE_OSM, ciemny: STYLE_CIEMNY, satelite: STYLE_SATELITA };
 
 const map = new maplibregl.Map({
   container: 'map',
