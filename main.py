@@ -135,6 +135,7 @@ def wyznacz_trase():
         "odleglosc_przypiecia_cel_m": odl_cel,
         "wariant": wariant,
         "algorytm": algorytm,
+        "odwiedzone_wezly": trasa.odwiedzone,
     }
 
     if wariant == "lesna":

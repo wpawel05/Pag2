@@ -62,7 +62,7 @@ class Trasa:
     czas_s: float
     koszt: float
     geometria: list
-
+    odwiedzone: int
 
 KosztKrawedzi = Callable[[dict, object, object], float]
 Heurystyka = Callable[[object, object, object], float]
@@ -193,10 +193,12 @@ def znajdz_trase(
     najlepszy_koszt: Dict[object, float] = {start: 0.0}
     poprzednik: Dict[object, Tuple[object, str]] = {}
 
+    odwiedzone = 0
     while kolejka:
         _, _, koszt_do_wezla, wezel = heapq.heappop(kolejka)
         if koszt_do_wezla != najlepszy_koszt.get(wezel):
             continue  # w kolejce został starszy, gorszy wpis
+        odwiedzone += 1
         if wezel == cel:
             break
 
@@ -242,4 +244,5 @@ def znajdz_trase(
         czas_s=czas_s,
         koszt=najlepszy_koszt[cel],
         geometria=geometria,
+        odwiedzone=odwiedzone,
     )

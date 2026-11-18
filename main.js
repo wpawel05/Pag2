@@ -91,6 +91,12 @@ function ustawAlgorytm(algorytm) {
     button.setAttribute('aria-pressed', String(aktywny));
   });
 
+  // Przy A* trasa leśna jest niedostępna, więc przełączamy na najkrótszą.
+  if (algorytm === 'astar' && currentRouteVariant === 'lesna') {
+    currentRouteVariant = 'najkrotsza';
+    ustawAktywnyPrzycisk('najkrotsza');
+  }
+
   // Jeśli trasa jest już wybrana, przelicz ją nowym algorytmem.
   if (startPoint && endPoint) {
     pobierzTrase(currentRouteVariant);
@@ -107,8 +113,10 @@ function ustawAktywnyPrzycisk(wariant) {
 }
 
 function ustawDostepnoscPrzyciskow(dostepne) {
-  Object.values(buttons).forEach((button) => {
-    button.disabled = !dostepne;
+  Object.entries(buttons).forEach(([nazwa, button]) => {
+    // Trasa leśna działa tylko z algorytmem Dijkstry.
+    const tylkoDijkstra = nazwa === 'lesna' && currentAlgorithm === 'astar';
+    button.disabled = !dostepne || tylkoDijkstra;
   });
 }
 
@@ -235,7 +243,7 @@ function wyczyscTrase() {
   startMarker = null;
   endMarker = null;
 
-  ustawDaneTrasy(emptyRoute, 'najkrotsza');
+  ustawDaneTrasy(emptyRoute, currentRouteVariant);
   ustawDostepnoscPrzyciskow(false);
 
   status.textContent = 'Kliknij mapę, aby wybrać start.';
@@ -329,7 +337,8 @@ async function pobierzTrase(wariant) {
         `Trasa najkrótsza: ${km} km, około ${czas}.`;
     }
 
-      status.textContent += ` Algorytm: ${NAZWY_ALGORYTMOW[currentAlgorithm]}.`;
+    status.textContent +=
+      ` Algorytm: ${NAZWY_ALGORYTMOW[props.algorytm]}, odwiedzone węzły: ${props.odwiedzone_wezly}.`;
 
   } catch (error) {
     if (numerZadania !== requestNumber) return;
@@ -392,7 +401,7 @@ map.on('click', async (event) => {
 
   ustawDostepnoscPrzyciskow(true);
 
-  await pobierzTrase('najkrotsza');
+  await pobierzTrase(currentRouteVariant);
 });
 
 document.getElementById('select-style').addEventListener('change', (event) => {
