@@ -176,8 +176,10 @@ function dopasujWidokDoTrasy(dane) {
     bounds.extend(coord);
   });
 
+  const menu = document.getElementById('sidebar').getBoundingClientRect();
+
   map.fitBounds(bounds, {
-    padding: 60,
+    padding: { top: 60, bottom: 60, right: 60, left: menu.right + 40 },
     maxZoom: 16
   });
 }
