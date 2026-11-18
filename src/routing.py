@@ -243,4 +243,3 @@ def znajdz_trase(
         koszt=najlepszy_koszt[cel],
         geometria=geometria,
     )
-
