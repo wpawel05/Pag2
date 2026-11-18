@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="pl">
 <head>
@@ -13,6 +14,7 @@
     <div class="sidebar-header">
       <span class="sidebar-brand">Menu</span>
     </div>
+
     <nav class="sidebar-nav">
       <div class="sub-item">
         <div class="param-row">
@@ -24,8 +26,50 @@
           </select>
         </div>
       </div>
+
+      <div class="route-section">
+        <div class="section-title">Wariant trasy</div>
+
+        <div class="route-variants">
+          <button
+            id="shortest-route"
+            class="variant-button shortest-button active"
+            type="button"
+            aria-pressed="true"
+            disabled
+          >
+            Najkrótsza
+          </button>
+
+          <button
+            id="fastest-route"
+            class="variant-button fastest-button"
+            type="button"
+            aria-pressed="false"
+            disabled
+          >
+            Najszybsza
+          </button>
+
+          <button
+            id="forest-route"
+            class="variant-button forest-button"
+            type="button"
+            aria-pressed="false"
+            disabled
+          >
+            Leśna
+          </button>
+        </div>
+      </div>
+
       <p id="route-status">Kliknij mapę, aby wybrać start.</p>
-      <button id="clear-route" type="button">Wyczyść trasę</button>
+
+      <div class="route-actions">
+        <button id="clear-route" class="clear-button" type="button">
+          Wyczyść trasę
+        </button>
+      </div>
     </nav>
   </aside>
 
