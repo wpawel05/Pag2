@@ -237,6 +237,16 @@ body {
     background: rgba(46, 158, 91, 0.42);
 }
 
+/* ---------- wybór algorytmu ---------- */
+
+.algorithm-buttons {
+    grid-template-columns: 1fr 1fr;
+}
+
+.algorithm-button.active {
+    background: rgba(255, 255, 255, 0.22);
+    border-color: rgba(255, 255, 255, 0.55);
+}
 /* Stan nieaktywny */
 
 .route-variants button:disabled {

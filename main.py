@@ -55,6 +55,11 @@ def wyznacz_trase():
     dane = request.get_json(silent=True) or {}
     wariant = dane.get("wariant", "najkrotsza")
 
+    algorytm = dane.get("algorytm", "astar")
+
+    if algorytm not in ("dijkstra", "astar"):
+        return jsonify({"error": "Nieznany algorytm."}), 400
+
     if wariant not in ("najkrotsza", "najszybsza", "lesna"):
         return jsonify({"error": "Nieznany wariant trasy."}), 400
 
@@ -94,7 +99,7 @@ def wyznacz_trase():
             graf,
             start=start,
             cel=cel,
-            algorytm="dijkstra",
+            algorytm=algorytm,
             kryterium="najkrotsza",
             koszt_krawedzi=koszt_trasy_lesnej,
         )
@@ -109,7 +114,7 @@ def wyznacz_trase():
             graf,
             start=start,
             cel=cel,
-            algorytm="astar",
+            algorytm=algorytm,
             kryterium=kryterium,
         )
 
@@ -129,6 +134,7 @@ def wyznacz_trase():
         "odleglosc_przypiecia_start_m": odl_start,
         "odleglosc_przypiecia_cel_m": odl_cel,
         "wariant": wariant,
+        "algorytm": algorytm,
     }
 
     if wariant == "lesna":

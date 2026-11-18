@@ -71,6 +71,32 @@ let startMarker = null;
 let endMarker = null;
 let requestNumber = 0;
 
+const algorithmButtons = {
+  dijkstra: document.getElementById('algorithm-dijkstra'),
+  astar: document.getElementById('algorithm-astar')
+};
+
+const NAZWY_ALGORYTMOW = { dijkstra: 'Dijkstra', astar: 'A*' };
+
+let currentAlgorithm = 'astar';
+
+function ustawAlgorytm(algorytm) {
+  if (algorytm === currentAlgorithm) return;
+
+  currentAlgorithm = algorytm;
+
+  Object.entries(algorithmButtons).forEach(([nazwa, button]) => {
+    const aktywny = nazwa === algorytm;
+    button.classList.toggle('active', aktywny);
+    button.setAttribute('aria-pressed', String(aktywny));
+  });
+
+  // Jeśli trasa jest już wybrana, przelicz ją nowym algorytmem.
+  if (startPoint && endPoint) {
+    pobierzTrase(currentRouteVariant);
+  }
+}
+
 function ustawAktywnyPrzycisk(wariant) {
   Object.entries(buttons).forEach(([nazwa, button]) => {
     const aktywny = nazwa === wariant;
@@ -238,7 +264,8 @@ async function pobierzTrase(wariant) {
       body: JSON.stringify({
         start: startPoint,
         cel: endPoint,
-        wariant
+        wariant,
+        algorytm: currentAlgorithm
       })
     });
 
@@ -302,6 +329,8 @@ async function pobierzTrase(wariant) {
         `Trasa najkrótsza: ${km} km, około ${czas}.`;
     }
 
+      status.textContent += ` Algorytm: ${NAZWY_ALGORYTMOW[currentAlgorithm]}.`;
+
   } catch (error) {
     if (numerZadania !== requestNumber) return;
 
@@ -327,6 +356,9 @@ buttons.najszybsza.addEventListener('click', () => {
 buttons.lesna.addEventListener('click', () => {
   pobierzTrase('lesna');
 });
+
+algorithmButtons.dijkstra.addEventListener('click', () => ustawAlgorytm('dijkstra'));
+algorithmButtons.astar.addEventListener('click', () => ustawAlgorytm('astar'));
 
 map.on('click', async (event) => {
   const point = [event.lngLat.lng, event.lngLat.lat];
