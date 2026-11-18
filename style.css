@@ -1,3 +1,4 @@
+
 * {
     margin: 0;
     padding: 0;
@@ -25,7 +26,8 @@
     --btn-bg-hover: rgba(255, 255, 255, 0.16);
     --btn-border: rgba(255, 255, 255, 0.18);
     --btn-border-hover: rgba(255, 255, 255, 0.28);
-    --btn-shadow: 0 1px 3px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    --btn-shadow: 0 1px 3px rgba(0, 0, 0, 0.35),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.06);
 
     --input-bg: rgba(60, 64, 90, 0.36);
     --input-bg-focus: rgba(72, 77, 106, 0.5);
@@ -40,7 +42,8 @@
 
     --panel-border: rgba(255, 255, 255, 0.14);
 
-    --text-halo: 0 0 2px rgba(0, 0, 0, 0.9), 0 0 6px rgba(0, 0, 0, 0.55);
+    --text-halo: 0 0 2px rgba(0, 0, 0, 0.9),
+                 0 0 6px rgba(0, 0, 0, 0.55);
 }
 
 body {
@@ -161,6 +164,128 @@ body {
     background: #2e3246;
     color: var(--ink);
 }
+
+/* ---------- wybór wariantu trasy ---------- */
+
+.route-section {
+    padding: 16px 20px 4px;
+}
+
+.section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-dim);
+    margin-bottom: 10px;
+}
+
+.route-variants {
+    display: grid;
+    gap: 8px;
+}
+
+.route-variants button {
+    width: 100%;
+    min-height: 38px;
+    border: 1px solid var(--btn-border);
+    border-radius: 7px;
+    padding: 9px 12px;
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-shadow: none;
+    background: var(--btn-bg);
+    transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+}
+
+.route-variants button:hover:not(:disabled) {
+    background: var(--btn-bg-hover);
+    border-color: var(--btn-border-hover);
+}
+
+/* Trasa najkrótsza */
+
+.shortest-button.active {
+    background: rgba(23, 105, 255, 0.28);
+    border-color: rgba(91, 147, 255, 0.75);
+}
+
+.shortest-button.active:hover:not(:disabled) {
+    background: rgba(23, 105, 255, 0.38);
+}
+
+/* Trasa najszybsza */
+
+.fastest-button.active {
+    background: rgba(233, 155, 50, 0.25);
+    border-color: rgba(245, 180, 90, 0.75);
+}
+
+.fastest-button.active:hover:not(:disabled) {
+    background: rgba(233, 155, 50, 0.36);
+}
+
+/* Trasa leśna */
+
+.forest-button.active {
+    background: rgba(46, 158, 91, 0.28);
+    border-color: rgba(86, 202, 132, 0.65);
+}
+
+.forest-button.active:hover:not(:disabled) {
+    background: rgba(46, 158, 91, 0.42);
+}
+
+/* Stan nieaktywny */
+
+.route-variants button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+/* ---------- komunikaty ---------- */
+
+#route-status {
+    padding: 12px 20px;
+    color: var(--ink-dim);
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+/* ---------- przyciski dodatkowe ---------- */
+
+.route-actions {
+    display: grid;
+    gap: 8px;
+    padding: 12px 20px;
+}
+
+.route-actions button {
+    width: 100%;
+    min-height: 38px;
+    border: 1px solid var(--btn-border);
+    border-radius: 7px;
+    padding: 9px 12px;
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-shadow: none;
+    transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+}
+
+.clear-button {
+    background: var(--btn-bg);
+}
+
+.clear-button:hover {
+    background: var(--btn-bg-hover);
+    border-color: var(--btn-border-hover);
+}
+
+/* ---------- responsywność ---------- */
 
 @media (max-width: 768px) {
     .sidebar {
