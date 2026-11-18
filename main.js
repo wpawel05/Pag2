@@ -1,7 +1,7 @@
+
 import * as maplibregl from 'https://unpkg.com/maplibre-gl@6.6.0/dist/maplibre-gl.mjs';
 
 const STYLE_OSM = 'https://tiles.openfreemap.org/styles/liberty';
-
 const STYLE_CIEMNY = 'https://tiles.openfreemap.org/styles/dark';
 
 const STYLE_SATELITA = {
@@ -14,10 +14,30 @@ const STYLE_SATELITA = {
       attribution: 'Imagery &copy; Esri'
     }
   },
-  layers: [{ id: 'satelite-layer', type: 'raster', source: 'satelite-tiles' }]
+  layers: [{
+    id: 'satelite-layer',
+    type: 'raster',
+    source: 'satelite-tiles'
+  }]
 };
 
-const STYLES = { osm: STYLE_OSM, ciemny: STYLE_CIEMNY, satelite: STYLE_SATELITA };
+const STYLES = {
+  osm: STYLE_OSM,
+  ciemny: STYLE_CIEMNY,
+  satelite: STYLE_SATELITA
+};
+
+const KOLORY_TRAS = {
+  najkrotsza: '#1769ff',
+  najszybsza: '#e99b32',
+  lesna: '#2e9e5b'
+};
+
+const NAZWY_WARIANTOW = {
+  najkrotsza: 'najkrótszą',
+  najszybsza: 'najszybszą',
+  lesna: 'leśną'
+};
 
 const map = new maplibregl.Map({
   container: 'map',
@@ -31,16 +51,40 @@ map.addControl(new maplibregl.NavigationControl(), 'top-right');
 const status = document.getElementById('route-status');
 const clearButton = document.getElementById('clear-route');
 
+const buttons = {
+  najkrotsza: document.getElementById('shortest-route'),
+  najszybsza: document.getElementById('fastest-route'),
+  lesna: document.getElementById('forest-route')
+};
+
 const emptyRoute = {
   type: 'FeatureCollection',
   features: []
 };
 
 let currentRoute = emptyRoute;
+let currentRouteVariant = 'najkrotsza';
+let shortestRoute = null;
 let startPoint = null;
 let endPoint = null;
 let startMarker = null;
 let endMarker = null;
+let requestNumber = 0;
+
+function ustawAktywnyPrzycisk(wariant) {
+  Object.entries(buttons).forEach(([nazwa, button]) => {
+    const aktywny = nazwa === wariant;
+
+    button.classList.toggle('active', aktywny);
+    button.setAttribute('aria-pressed', String(aktywny));
+  });
+}
+
+function ustawDostepnoscPrzyciskow(dostepne) {
+  Object.values(buttons).forEach((button) => {
+    button.disabled = !dostepne;
+  });
+}
 
 function addRouteLayer() {
   if (!map.getSource('route')) {
@@ -60,40 +104,102 @@ function addRouteLayer() {
         'line-join': 'round'
       },
       paint: {
-        'line-color': '#1769ff',
+        'line-color': KOLORY_TRAS[currentRouteVariant],
         'line-width': 6
       }
     });
   }
 }
 
-// Warstwa z prostokątem przedstawiającym obszar, w którym można wyznaczyć trasy
+// Warstwa z prostokątem przedstawiającym obszar, w którym można wyznaczyć trasy.
 map.on('style.load', () => {
-  map.addSource('bbox', {
-    type: 'geojson',
-    data: {
-      type: 'Feature',
-      geometry: {
-        type: 'Polygon',
-        coordinates: [[[18.45, 52.95], [18.75, 52.95], [18.75, 53.10], [18.45, 53.10], [18.45, 52.95]]]
+  if (!map.getSource('bbox')) {
+    map.addSource('bbox', {
+      type: 'geojson',
+      data: {
+        type: 'Feature',
+        geometry: {
+          type: 'Polygon',
+          coordinates: [[
+            [18.45, 52.95],
+            [18.75, 52.95],
+            [18.75, 53.10],
+            [18.45, 53.10],
+            [18.45, 52.95]
+          ]]
+        }
       }
-    }
-  });
-  map.addLayer({
-    id: 'bbox-line',
-    type: 'line',
-    source: 'bbox',
-    paint: { 'line-color': '#1769ff', 'line-width': 2 }
-  });
+    });
+  }
+
+  if (!map.getLayer('bbox-line')) {
+    map.addLayer({
+      id: 'bbox-line',
+      type: 'line',
+      source: 'bbox',
+      paint: {
+        'line-color': '#1769ff',
+        'line-width': 2
+      }
+    });
+  }
 });
 
-// Warstwa jest dodawana również po zmianie podkładu mapy.
+// Warstwa trasy jest dodawana ponownie po każdej zmianie podkładu.
 map.on('style.load', addRouteLayer);
 
-function clearRoute() {
+function ustawDaneTrasy(dane, wariant = currentRouteVariant) {
+  currentRoute = dane;
+  currentRouteVariant = wariant;
+
+  const source = map.getSource('route');
+  if (source) {
+    source.setData(currentRoute);
+  }
+
+  if (map.getLayer('route-line')) {
+    map.setPaintProperty(
+      'route-line',
+      'line-color',
+      KOLORY_TRAS[currentRouteVariant]
+    );
+  }
+
+  ustawAktywnyPrzycisk(wariant);
+}
+
+function dopasujWidokDoTrasy(dane) {
+  const feature = dane.features[0];
+  const bounds = new maplibregl.LngLatBounds();
+
+  feature.geometry.coordinates.forEach((coord) => {
+    bounds.extend(coord);
+  });
+
+  map.fitBounds(bounds, {
+    padding: 60,
+    maxZoom: 16
+  });
+}
+
+function tekstCzasu(czasSekundy) {
+  const calkowityCzas = Math.round(czasSekundy);
+  const minuty = Math.floor(calkowityCzas / 60);
+  const sekundy = calkowityCzas % 60;
+
+  if (minuty === 0) return `${sekundy} s`;
+  if (sekundy === 0) return `${minuty} min`;
+
+  return `${minuty} min ${sekundy} s`;
+}
+
+function wyczyscTrase() {
+  // Unieważnia ewentualne odpowiedzi żądań, które nadal są w toku.
+  requestNumber += 1;
+
   startPoint = null;
   endPoint = null;
-  currentRoute = emptyRoute;
+  shortestRoute = null;
 
   if (startMarker) startMarker.remove();
   if (endMarker) endMarker.remove();
@@ -101,43 +207,37 @@ function clearRoute() {
   startMarker = null;
   endMarker = null;
 
-  const source = map.getSource('route');
-  if (source) source.setData(currentRoute);
+  ustawDaneTrasy(emptyRoute, 'najkrotsza');
+  ustawDostepnoscPrzyciskow(false);
 
   status.textContent = 'Kliknij mapę, aby wybrać start.';
 }
 
-clearButton.addEventListener('click', clearRoute);
-
-map.on('click', async (event) => {
-  const point = [event.lngLat.lng, event.lngLat.lat];
-
-  // Pierwsze kliknięcie wybiera start. Po wyznaczonej trasie
-  // następne kliknięcie rozpoczyna wybór nowej trasy.
-  if (!startPoint || endPoint) {
-    clearRoute();
-
-    startPoint = point;
-    startMarker = new maplibregl.Marker({ color: '#22a06b' })
-      .setLngLat(point)
-      .addTo(map);
-
-    status.textContent = 'Start wybrany. Kliknij mapę, aby wybrać cel.';
+async function pobierzTrase(wariant) {
+  if (!startPoint || !endPoint) {
+    status.textContent = 'Najpierw wybierz punkt początkowy i końcowy.';
     return;
   }
 
-  endPoint = point;
-  endMarker = new maplibregl.Marker({ color: '#d14343' })
-    .setLngLat(point)
-    .addTo(map);
+  if (!buttons[wariant]) return;
 
-  status.textContent = 'Wyznaczam trasę…';
+  const numerZadania = ++requestNumber;
+
+  ustawDostepnoscPrzyciskow(false);
+
+  status.textContent = `Wyznaczam trasę ${NAZWY_WARIANTOW[wariant]}…`;
 
   try {
     const response = await fetch('/api/route', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ start: startPoint, cel: endPoint })
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        start: startPoint,
+        cel: endPoint,
+        wariant
+      })
     });
 
     const dane = await response.json();
@@ -146,34 +246,121 @@ map.on('click', async (event) => {
       throw new Error(dane.error || 'Nie udało się wyznaczyć trasy.');
     }
 
-    currentRoute = dane;
-    map.getSource('route').setData(currentRoute);
+    // Nie pokazuj odpowiedzi dla wcześniejszego zestawu punktów lub wariantu.
+    if (numerZadania !== requestNumber) return;
+
+    ustawDaneTrasy(dane, wariant);
+    dopasujWidokDoTrasy(dane);
 
     const feature = dane.features[0];
-    const bounds = new maplibregl.LngLatBounds();
-    feature.geometry.coordinates.forEach((coord) => bounds.extend(coord));
-    map.fitBounds(bounds, { padding: 60, maxZoom: 16 });
+    const props = feature.properties;
 
-    const km = (feature.properties.dlugosc_m / 1000).toFixed(2);
-    const calkowityCzas = Math.round(feature.properties.czas_s);
-    const minuty = Math.floor(calkowityCzas / 60);
-    const sekundy = calkowityCzas % 60;
+    const km = (props.dlugosc_m / 1000).toFixed(2);
+    const czas = tekstCzasu(props.czas_s);
 
-    let czasTekst;
-    if (minuty === 0) {
-      czasTekst = `${sekundy} s`;
-    } else if (sekundy === 0) {
-      czasTekst = `${minuty} min`;
+    if (wariant === 'lesna') {
+      const udzialLasu = Number(props.udzial_lasu_pct || 0);
+
+      let komunikat =
+        `Trasa leśna: ${km} km, około ${czas}. ` +
+        `Udział lasu: ${udzialLasu.toFixed(1)}%.`;
+
+      if (shortestRoute?.features?.length) {
+        const dlugoscNajkrotszej =
+          shortestRoute.features[0].properties.dlugosc_m;
+
+        if (dlugoscNajkrotszej > 0) {
+          const mnoznik = props.dlugosc_m / dlugoscNajkrotszej;
+
+          komunikat +=
+            ` Długość: ${mnoznik.toFixed(2)}× trasy najkrótszej.`;
+
+          if (mnoznik > 2) {
+            komunikat += ' Trasa przekracza umowny próg 2×.';
+          }
+        }
+      }
+
+      if (udzialLasu < 1) {
+        komunikat +=
+          ' Udział lasu jest niewielki — w tej okolicy może brakować dróg leśnych.';
+      }
+
+      status.textContent = komunikat;
+
+    } else if (wariant === 'najszybsza') {
+      status.textContent =
+        `Trasa najszybsza: ${km} km, około ${czas}.`;
+
     } else {
-      czasTekst = `${minuty} min ${sekundy} s`;
+      // Zapamiętujemy najkrótszą trasę do późniejszego porównania.
+      shortestRoute = dane;
+
+      status.textContent =
+        `Trasa najkrótsza: ${km} km, około ${czas}.`;
     }
 
-    status.textContent = `Trasa: ${km} km, około ${czasTekst}.`;
   } catch (error) {
+    if (numerZadania !== requestNumber) return;
+
     status.textContent = error.message;
+
+  } finally {
+    if (numerZadania === requestNumber) {
+      ustawDostepnoscPrzyciskow(Boolean(startPoint && endPoint));
+    }
   }
+}
+
+clearButton.addEventListener('click', wyczyscTrase);
+
+buttons.najkrotsza.addEventListener('click', () => {
+  pobierzTrase('najkrotsza');
 });
 
-document.getElementById('select-style').addEventListener('change', (e) => {
-  map.setStyle(STYLES[e.target.value]);
+buttons.najszybsza.addEventListener('click', () => {
+  pobierzTrase('najszybsza');
+});
+
+buttons.lesna.addEventListener('click', () => {
+  pobierzTrase('lesna');
+});
+
+map.on('click', async (event) => {
+  const point = [event.lngLat.lng, event.lngLat.lat];
+
+  // Pierwsze kliknięcie wybiera start. Po wyznaczonej trasie następne
+  // kliknięcie rozpoczyna wybór nowej pary punktów.
+  if (!startPoint || endPoint) {
+    wyczyscTrase();
+
+    startPoint = point;
+
+    startMarker = new maplibregl.Marker({
+      color: '#22a06b'
+    })
+      .setLngLat(point)
+      .addTo(map);
+
+    status.textContent =
+      'Start wybrany. Kliknij mapę, aby wybrać cel.';
+
+    return;
+  }
+
+  endPoint = point;
+
+  endMarker = new maplibregl.Marker({
+    color: '#d14343'
+  })
+    .setLngLat(point)
+    .addTo(map);
+
+  ustawDostepnoscPrzyciskow(true);
+
+  await pobierzTrase('najkrotsza');
+});
+
+document.getElementById('select-style').addEventListener('change', (event) => {
+  map.setStyle(STYLES[event.target.value]);
 });
