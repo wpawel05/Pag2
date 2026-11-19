@@ -249,7 +249,7 @@ function wyczyscTrase() {
   status.textContent = 'Kliknij mapę, aby wybrać start.';
 }
 
-async function pobierzTrase(wariant) {
+async function pobierzTrase(wariant, dopasujWidok = true) {
   if (!startPoint || !endPoint) {
     status.textContent = 'Najpierw wybierz punkt początkowy i końcowy.';
     return;
@@ -287,7 +287,7 @@ async function pobierzTrase(wariant) {
     if (numerZadania !== requestNumber) return;
 
     ustawDaneTrasy(dane, wariant);
-    dopasujWidokDoTrasy(dane);
+    if (dopasujWidok) dopasujWidokDoTrasy(dane);
 
     const feature = dane.features[0];
     const props = feature.properties;
@@ -369,7 +369,37 @@ buttons.lesna.addEventListener('click', () => {
 algorithmButtons.dijkstra.addEventListener('click', () => ustawAlgorytm('dijkstra'));
 algorithmButtons.astar.addEventListener('click', () => ustawAlgorytm('astar'));
 
+// Puszczenie markera potrafi wywołać też kliknięcie mapy, które zaczęłoby
+// wybór nowych punktów. Ta flaga na chwilę je ignoruje.
+let wlasniePrzeciagnieto = false;
+
+// Podczas przeciągania przeliczamy trasę najwyżej raz na pół sekundy.
+const ODSTEP_PRZELICZANIA_MS = 500;
+let ostatniePrzeliczenie = 0;
+
+function wTrakciePrzeciagania() {
+  const teraz = Date.now();
+  if (teraz - ostatniePrzeliczenie < ODSTEP_PRZELICZANIA_MS) return;
+
+  ostatniePrzeliczenie = teraz;
+
+  if (startPoint && endPoint) {
+    pobierzTrase(currentRouteVariant, false);
+  }
+}
+
+function poPrzeciagnieciu() {
+  wlasniePrzeciagnieto = true;
+  setTimeout(() => { wlasniePrzeciagnieto = false; }, 0);
+
+  if (startPoint && endPoint) {
+    pobierzTrase(currentRouteVariant, false);
+  }
+}
+
 map.on('click', async (event) => {
+  if (wlasniePrzeciagnieto) return;
+
   const point = [event.lngLat.lng, event.lngLat.lat];
 
   // Pierwsze kliknięcie wybiera start. Po wyznaczonej trasie następne
@@ -380,10 +410,23 @@ map.on('click', async (event) => {
     startPoint = point;
 
     startMarker = new maplibregl.Marker({
-      color: '#22a06b'
+      color: '#22a06b',
+      draggable: true
     })
       .setLngLat(point)
       .addTo(map);
+
+    startMarker.on('drag', () => {
+      const { lng, lat } = startMarker.getLngLat();
+      startPoint = [lng, lat];
+      wTrakciePrzeciagania();
+    });
+
+    startMarker.on('dragend', () => {
+      const { lng, lat } = startMarker.getLngLat();
+      startPoint = [lng, lat];
+      poPrzeciagnieciu();
+    });
 
     status.textContent =
       'Start wybrany. Kliknij mapę, aby wybrać cel.';
@@ -394,10 +437,23 @@ map.on('click', async (event) => {
   endPoint = point;
 
   endMarker = new maplibregl.Marker({
-    color: '#d14343'
+    color: '#d14343',
+    draggable: true
   })
     .setLngLat(point)
     .addTo(map);
+
+  endMarker.on('drag', () => {
+    const { lng, lat } = endMarker.getLngLat();
+    endPoint = [lng, lat];
+    wTrakciePrzeciagania();
+  });
+
+  endMarker.on('dragend', () => {
+    const { lng, lat } = endMarker.getLngLat();
+    endPoint = [lng, lat];
+    poPrzeciagnieciu();
+  });
 
   ustawDostepnoscPrzyciskow(true);
 
