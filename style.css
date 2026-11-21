@@ -237,7 +237,7 @@ body {
     background: rgba(46, 158, 91, 0.42);
 }
 
-/* ---------- wybór algorytmu ---------- */
+/*  wybór algorytmu  */
 
 .algorithm-buttons {
     grid-template-columns: 1fr 1fr;

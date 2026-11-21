@@ -320,7 +320,7 @@ async function pobierzTrase(wariant, dopasujWidok = true) {
 
       if (udzialLasu < 1) {
         komunikat +=
-          ' Udział lasu jest niewielki — w tej okolicy może brakować dróg leśnych.';
+          ' Udział lasu jest niewielki - w tej okolicy może brakować dróg leśnych.';
       }
 
       status.textContent = komunikat;
@@ -378,6 +378,7 @@ const ODSTEP_PRZELICZANIA_MS = 500;
 let ostatniePrzeliczenie = 0;
 
 function wTrakciePrzeciagania() {
+  shortestRoute = null;
   const teraz = Date.now();
   if (teraz - ostatniePrzeliczenie < ODSTEP_PRZELICZANIA_MS) return;
 
@@ -389,6 +390,7 @@ function wTrakciePrzeciagania() {
 }
 
 function poPrzeciagnieciu() {
+  shortestRoute = null;
   wlasniePrzeciagnieto = true;
   setTimeout(() => { wlasniePrzeciagnieto = false; }, 0);
 
